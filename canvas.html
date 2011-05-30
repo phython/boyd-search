@@ -8,8 +8,7 @@
   body { text-color: black; }
  </style>
  <script language="JavaScript">
-   var base_person = {"name": "James Morrison",
-                      "Date of Birth": [1981, 10, 2]};
+   var base_person = {{Base_person}};
    function FormatDate(date_array) {
      return date_array.join("-");
    }
@@ -33,6 +32,18 @@
 
 </head>
 <body onload="draw_person(225, 190, base_person)">
+  <div align="right">
+  {{.section Email}}
+    {{Email}}
+  {{.or}}
+    <a href="{{Login_url}}">Login</a>
+  {{.end}}
+  </div><hr>
   <canvas id="base_person" height=400 width=500></canvas>
+  <hr>
+  <form id="search">
+    <input type="text" name="q" width="50">
+    <input type="submit">
+  </form>
 </body>
 </html>

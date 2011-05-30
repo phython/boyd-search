@@ -20,6 +20,7 @@ import (
   "appengine"; "appengine/user"
 //  "./gedcom"
   "http"
+  "log"
   "template"
 )
 
@@ -47,21 +48,25 @@ func init() {
 }
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
-  var data map[string] string
+  data := make(map[string] string)
   c := appengine.NewContext(r)
   u := user.Current(c)
   if u != nil {
-    data["email"] = u.String()
+    data["Email"] = u.String()
   } else {
     url, err := user.LoginURL(c, r.URL.String())
     if err != nil {
       http.Error(w, err.String(), http.StatusInternalServerError)
       return
     }
-    data["login_url"] = url
+    data["Login_url"] = url
   }
+  data["Base_person"] = "{\"name\": \"James Morrison\", \"Date of Birth\": [1981, 10, 2]}"
 
-  searchTemplate.Execute(w, data)
+  template_err := searchTemplate.Execute(w, data)
+  if template_err != nil {
+    log.Print("Error rendering template ", template_err)
+  }
 }
 
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
