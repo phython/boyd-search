@@ -1,0 +1,5 @@
+This is the tree for the first bring-out-your-dead application.  The application
+is written in go.  The application will allow a user to upload a gedcom
+file then search through the file for a person.
+
+http://search.bring-out-your-dead.org .
