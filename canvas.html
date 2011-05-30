@@ -1,0 +1,38 @@
+<html>
+<!-- The keys can be localized since the page will pass back a language code
+     in all requests.  A date localization javascript function should be used.
+-->
+<head>
+ <title>Canvas test</title>
+ <style>
+  body { text-color: black; }
+ </style>
+ <script language="JavaScript">
+   var base_person = {"name": "James Morrison",
+                      "Date of Birth": [1981, 10, 2]};
+   function FormatDate(date_array) {
+     return date_array.join("-");
+   }
+
+   function draw_person(base_x, base_y, person) {
+     var canvas = document.getElementById("base_person");
+     var context = canvas.getContext("2d");
+     var measure = context.measureText(person["name"]);
+     var formatted_date = FormatDate(person["Date of Birth"]);
+     var measure2 = context.measureText(formatted_date);
+     var width = Math.max(measure.width, measure2.width)
+     context.strokeRect(base_x + 5, base_y + 5, width+10, 15);
+     context.fillText(person["name"], base_x + 10, base_y + 15);
+
+     context.strokeRect(base_x + 5,  base_y + 25, width+10, 15);
+     context.fillText(formatted_date, base_x + 10, base_y + 35);
+
+     context.strokeRect(base_x, base_y, width + 20, 45)
+   }
+ </script>
+
+</head>
+<body onload="draw_person(225, 190, base_person)">
+  <canvas id="base_person" height=400 width=500></canvas>
+</body>
+</html>
