@@ -17,8 +17,9 @@
 package search
 
 import (
-  "appengine"; "appengine/user"
-//  "./gedcom"
+  "appengine"; "appengine/blobstore"; "appengine/taskqueue"; "appengine/user"
+  "bytes"
+  "fmt"
   "http"
   "log"
   "template"
@@ -43,6 +44,7 @@ func create_template(file string) *template.Template {
 func init() {
   http.HandleFunc("/", SearchHandler)
   http.HandleFunc("/upload", UploadHandler)
+  http.HandleFunc("/process/gedcom", GedcomHandler)
   searchTemplate = create_template("canvas.html")
   uploadTemplate = create_template("upload.html")
 }
@@ -61,7 +63,10 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
     }
     data["Login_url"] = url
   }
-  data["Base_person"] = "{\"name\": \"James Morrison\", \"Date of Birth\": [1981, 10, 2]}"
+  data["Base_person"] =
+      "{\"name\": \"James Morrison\", \"Date of Birth\": [1981, 10, 2]}"
+  upload_url, _ :=  blobstore.UploadURL(c, "/upload")
+  data["Upload_Action"] = upload_url.String()
 
   template_err := searchTemplate.Execute(w, data)
   if template_err != nil {
@@ -70,12 +75,72 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
-  id := r.FormValue("id")
-  if len(id) > 0 {
-    uploadTemplate.Execute(w, id)
+  c := appengine.NewContext(r)
+  u := user.Current(c)
+  if u == nil {
+    url, _ := user.LoginURL(c, r.URL.String())
+    w.Header().Set("Location", url)
+    w.WriteHeader(http.StatusFound)
     return
   }
 
-  w.Header().Set("Location", r.URL.Path + "?id=")
+  id := r.FormValue("id")
+  if len(id) > 0 {
+    w.Header().Set("Location", "/upload2?id=has_key:" + id)
+    w.WriteHeader(http.StatusFound)
+//    uploadTemplate.Execute(w, id)
+    return
+  }
+
+  blobs, other_params, err := blobstore.ParseUpload(r)
+  if len(blobs) == 0 {
+//    w.WriteHeader(http.StatusBadRequest)
+//    fmt.Fprintf(w, "No data '%v'", err)
+    w.Header().Set("Location", "/upload2?id=Bad+upload:" + err.String())
+    w.WriteHeader(http.StatusFound)
+    return
+  }
+  file := blobs["file_data"]
+  if len(file) == 0 {
+//    w.WriteHeader(http.StatusBadRequest)
+//    fmt.Fprintf(w, "No data")
+    w.Header().Set("Location", "/upload2?id=No_file_data")
+    w.WriteHeader(http.StatusFound)
+    return
+  }
+
+  key := string(file[0].BlobKey)
+  if other_params == nil {
+    other_params = make(map[string] []string)
+  }
+  other_params["key"] = append(other_params["key"], key)
+  task := taskqueue.NewPOSTTask("/process/gedcom", other_params)
+  task.Name = key
+  if err := taskqueue.Add(c, task, ""); err != nil {
+//    http.Error(w, err.String(), http.StatusInternalServerError)
+    w.Header().Set("Location", "/upload2?id=bad_task:" + err.String())
+    w.WriteHeader(http.StatusFound)
+    return
+  }
+
+  w.Header().Set("Location", "/upload?id=" + key)
   w.WriteHeader(http.StatusFound)
+  return
+}
+
+func GedcomHandler(w http.ResponseWriter, r *http.Request) {
+  c := appengine.NewContext(r)
+
+  key := appengine.BlobKey(r.FormValue("key"))
+
+  buffer := new(bytes.Buffer)
+  buffer.ReadFrom(blobstore.NewReader(c, key))
+  var raw_data RawGedCom
+  if !raw_data.Parse(buffer) {
+    w.WriteHeader(http.StatusBadRequest)
+    fmt.Fprintf(w, "Bad data")
+    return
+  }
+  w.WriteHeader(http.StatusOK)
+  fmt.Fprintf(w, "ok")
 }

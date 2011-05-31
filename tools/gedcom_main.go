@@ -22,7 +22,7 @@ func main() {
       os.Exit(1)
     }
     log.Print("Parsing ", bytes, " bytes from ", flag.Arg(i))
-    var data gedcom.RawGedCom
+    var data search.RawGedCom
     data.Parse(buffer)
   }
 }

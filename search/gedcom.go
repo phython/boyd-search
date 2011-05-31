@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gedcom
+package search 
 
 import (
   "bytes"
@@ -62,7 +62,8 @@ func WhiteSpaceOrBom(rune int) bool {
   return unicode.IsSpace(rune) || unicode.Is(bom, rune)
 }
 
-func (gedcom *RawGedCom) parse_data(line string, previous_level *int) bool {
+func (gedcom *RawGedCom) parse_data(line string, line_num int,
+                                    previous_level *int) bool {
   trimed_contents := strings.TrimFunc(line, WhiteSpaceOrBom)
   if len(trimed_contents) == 0 {
     return true
@@ -70,7 +71,7 @@ func (gedcom *RawGedCom) parse_data(line string, previous_level *int) bool {
 
   contents := strings.Split(trimed_contents, " ", 3)
   if len(contents) < 2 {
-    log.Print("Not enough columns for: ", line)
+    log.Printf("Not enough columns for:%d:%s", line_num, line)
     return false
   }
   level, err := strconv.Atoi(contents[0])
@@ -114,13 +115,17 @@ func (gedcom *RawGedCom) Parse(contents *bytes.Buffer) bool {
   var line string
   var err os.Error = nil
   previous_level := 0
+  good := true
+  line_num := 0
   for err == nil {
     line, err = contents.ReadString('\n')
-    good := gedcom.parse_data(line, &previous_level)
-    if !good {
+    line_num++
+    good_line := gedcom.parse_data(line, line_num, &previous_level)
+    if !good_line {
       log.Print("Trouble parsing ", line)
     }
+    good = good && good_line
   }
 
-  return true 
+  return good
 }

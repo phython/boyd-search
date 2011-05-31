@@ -4,5 +4,5 @@ runtime: go
 api_version: 1
 
 handlers:
-- url: /
+- url: /.*
   script: _go_app

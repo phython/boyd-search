@@ -8,28 +8,27 @@
   body { text-color: black; }
  </style>
  <script language="JavaScript">
-   var base_person = {{Base_person}};
-   function FormatDate(date_array) {
-     return date_array.join("-");
-   }
+  var base_person = {{Base_person}};
+  function FormatDate(date_array) {
+    return date_array.join("-");
+  }
 
-   function draw_person(base_x, base_y, person) {
-     var canvas = document.getElementById("base_person");
-     var context = canvas.getContext("2d");
-     var measure = context.measureText(person["name"]);
-     var formatted_date = FormatDate(person["Date of Birth"]);
-     var measure2 = context.measureText(formatted_date);
-     var width = Math.max(measure.width, measure2.width)
-     context.strokeRect(base_x + 5, base_y + 5, width+10, 15);
-     context.fillText(person["name"], base_x + 10, base_y + 15);
+  function draw_person(base_x, base_y, person) {
+    var canvas = document.getElementById("base_person");
+    var context = canvas.getContext("2d");
+    var measure = context.measureText(person["name"]);
+    var formatted_date = FormatDate(person["Date of Birth"]);
+    var measure2 = context.measureText(formatted_date);
+    var width = Math.max(measure.width, measure2.width)
+    context.strokeRect(base_x + 5, base_y + 5, width+10, 15);
+    context.fillText(person["name"], base_x + 10, base_y + 15);
 
-     context.strokeRect(base_x + 5,  base_y + 25, width+10, 15);
-     context.fillText(formatted_date, base_x + 10, base_y + 35);
+    context.strokeRect(base_x + 5,  base_y + 25, width+10, 15);
+    context.fillText(formatted_date, base_x + 10, base_y + 35);
 
-     context.strokeRect(base_x, base_y, width + 20, 45)
-   }
+    context.strokeRect(base_x, base_y, width + 20, 45)
+  }
  </script>
-
 </head>
 <body onload="draw_person(225, 190, base_person)">
   <div align="right">
@@ -45,5 +44,20 @@
     <input type="text" name="q" width="50">
     <input type="submit">
   </form>
+  {{.section Email}}
+    <form id="upload" method="POST" action="{{Upload_Action}}"
+          enctype="multipart/form-data">
+      <input type="file" name="file_data">
+      <input type="submit" name="do_upload" value="Upload">
+      <select name="visibility">
+        <option value="only_dead">Make only the dead publically searchable
+        </option>
+        <option value="everyone">Make everyone publically searchable</option>
+        <option value="private">Make all data privately searchable</option>
+      </select>
+    </form>
+  {{.or}}
+    <p>Login to upload data</p>
+  {{.end}}
 </body>
 </html>
