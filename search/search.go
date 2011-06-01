@@ -55,6 +55,13 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
   u := user.Current(c)
   if u != nil {
     data["Email"] = u.String()
+    upload_url, upload_err :=  blobstore.UploadURL(c, "/upload")
+    if upload_err != nil {
+      c.Logf("blob store is disabled? %v", upload_err)
+      data["Upload_Action"] = "/upload"
+    } else {
+      data["Upload_Action"] = upload_url.String()
+    }
   } else {
     url, err := user.LoginURL(c, r.URL.String())
     if err != nil {
@@ -65,8 +72,6 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
   }
   data["Base_person"] =
       "{\"name\": \"James Morrison\", \"Date of Birth\": [1981, 10, 2]}"
-  upload_url, _ :=  blobstore.UploadURL(c, "/upload")
-  data["Upload_Action"] = upload_url.String()
 
   template_err := searchTemplate.Execute(w, data)
   if template_err != nil {
