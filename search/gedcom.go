@@ -58,8 +58,9 @@ type RawGedCom struct {
 }
 
 func WhiteSpaceOrBom(rune int) bool {
-  bom := []unicode.Range{unicode.Range{0xFEFF, 0xFEFF, 1}}
-  return unicode.IsSpace(rune) || unicode.Is(bom, rune)
+  bom := unicode.RangeTable{R32: []unicode.Range32{{Lo: 0xFEFF, Hi:0xFEFF,
+                                                    Stride:1}}}
+  return unicode.IsSpace(rune) || unicode.Is(&bom, rune)
 }
 
 func (gedcom *RawGedCom) parse_data(line string, line_num int,
@@ -69,7 +70,7 @@ func (gedcom *RawGedCom) parse_data(line string, line_num int,
     return true
   }
 
-  contents := strings.Split(trimed_contents, " ", 3)
+  contents := strings.SplitN(trimed_contents, " ", 3)
   if len(contents) < 2 {
     log.Printf("Not enough columns for:%d:%s", line_num, line)
     return false
